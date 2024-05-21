@@ -55,6 +55,7 @@ impl<T: PixelColor, const MAX_SIZE: usize> Snake<T, MAX_SIZE> {
             size_y,
         }
     }
+    
     fn set_direction(&mut self, direction: Direction) {
         self.direction = direction;
     }
@@ -201,6 +202,9 @@ impl<const MAX_SIZE: usize, T: PixelColor, RNG: rand_core::RngCore> SnakeGame<MA
     }
     pub fn set_direction(&mut self, direction: Direction) {
         self.snake.set_direction(direction);
+    }
+    pub fn snake_grown(&self, sl: usize) -> bool {
+        self.snake.len > sl
     }
     pub fn draw<D>(&mut self, target: &mut D) -> ()
     where
