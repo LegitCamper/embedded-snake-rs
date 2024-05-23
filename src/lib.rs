@@ -55,7 +55,6 @@ impl<T: PixelColor, const MAX_SIZE: usize> Snake<T, MAX_SIZE> {
             size_y,
         }
     }
-    
     fn set_direction(&mut self, direction: Direction) {
         self.direction = direction;
     }
@@ -109,6 +108,7 @@ impl<T: PixelColor, const MAX_SIZE: usize> Snake<T, MAX_SIZE> {
             }
             Direction::None => {}
         }
+    
     }
 }
 
@@ -200,6 +200,18 @@ impl<const MAX_SIZE: usize, T: PixelColor, RNG: rand_core::RngCore> SnakeGame<MA
             scale_y,
         }
     }
+    pub fn has_eaten_itself(&self) -> bool {
+        let head_position = self.snake.parts[0].0;
+
+        // Check if the head collides with any part of the body except itself
+        for i in 1..self.snake.len {
+            if self.snake.parts[i].0 == head_position {
+                return true;
+            }
+        }
+
+        false
+    }
     pub fn set_direction(&mut self, direction: Direction) {
         self.snake.set_direction(direction);
     }
@@ -233,6 +245,7 @@ impl<const MAX_SIZE: usize, T: PixelColor, RNG: rand_core::RngCore> SnakeGame<MA
             _ = part.draw(&mut scaled_display);
         }
         _ = self.food.get_pixel().draw(&mut scaled_display);
+
     }
 }
 
