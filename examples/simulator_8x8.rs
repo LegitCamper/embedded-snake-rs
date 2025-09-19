@@ -21,6 +21,7 @@ fn main() -> Result<(), std::convert::Infallible> {
         1,
         1,
         rand::thread_rng(),
+        Rgb888::BLACK,
         Rgb888::RED,
         Rgb888::YELLOW,
         10,
@@ -43,7 +44,7 @@ fn main() -> Result<(), std::convert::Infallible> {
                 _ => {}
             }
         }
-        display.clear(Rgb888::BLACK)?;
+        game.pre_draw(&mut display);
         game.draw(&mut display);
         window.update(&display);
         thread::sleep(Duration::from_millis(300));

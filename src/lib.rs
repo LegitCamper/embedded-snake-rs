@@ -11,8 +11,8 @@ struct Snake<T: PixelColor, const MAX_SIZE: usize> {
     parts: [Pixel<T>; MAX_SIZE],
     len: usize,
     direction: Direction,
-    size_x: u8,
-    size_y: u8,
+    size_x: u16,
+    size_y: u16,
 }
 
 struct SnakeIntoIterator<'a, T: PixelColor, const MAX_SIZE: usize> {
@@ -46,7 +46,7 @@ impl<'a, T: PixelColor, const MAX_SIZE: usize> Iterator for SnakeIntoIterator<'a
 }
 
 impl<T: PixelColor, const MAX_SIZE: usize> Snake<T, MAX_SIZE> {
-    fn new(color: T, size_x: u8, size_y: u8) -> Snake<T, MAX_SIZE> {
+    fn new(color: T, size_x: u16, size_y: u16) -> Snake<T, MAX_SIZE> {
         Snake {
             parts: [Pixel::<T>(Point { x: 0, y: 0 }, color); MAX_SIZE],
             len: 5,
@@ -108,19 +108,18 @@ impl<T: PixelColor, const MAX_SIZE: usize> Snake<T, MAX_SIZE> {
             }
             Direction::None => {}
         }
-    
     }
 }
 
 struct Food<T: PixelColor, RNG: rand_core::RngCore> {
-    size_x: u8,
-    size_y: u8,
+    size_x: u16,
+    size_y: u16,
     place: Pixel<T>,
     rng: RNG,
 }
 
 impl<T: PixelColor, RNG: rand_core::RngCore> Food<T, RNG> {
-    pub fn new(color: T, rand_source: RNG, size_x: u8, size_y: u8) -> Self {
+    pub fn new(color: T, rand_source: RNG, size_x: u16, size_y: u16) -> Self {
         Food {
             size_x,
             size_y,
@@ -134,8 +133,8 @@ impl<T: PixelColor, RNG: rand_core::RngCore> Food<T, RNG> {
             let random_number = self.rng.next_u32();
             let blocked_positions = iter_source.into_iter();
             p = Point {
-                x: ((random_number >> 24) as u8 % self.size_x).into(),
-                y: ((random_number >> 16) as u8 % self.size_y).into(),
+                x: ((random_number >> 24) as u16 % self.size_x).into(),
+                y: ((random_number >> 16) as u16 % self.size_y).into(),
             };
             for blocked_position in blocked_positions {
                 if p == blocked_position.0 {
@@ -164,23 +163,25 @@ pub enum Direction {
 }
 
 pub struct SnakeGame<const MAX_SNAKE_SIZE: usize, T: PixelColor, RNG: rand_core::RngCore> {
+    background_color: T,
     snake: Snake<T, MAX_SNAKE_SIZE>,
     food: Food<T, RNG>,
     food_age: u8,
     food_lifetime: u8,
-    size_x: u8,
-    size_y: u8,
-    scale_x: u8,
-    scale_y: u8,
+    size_x: u16,
+    size_y: u16,
+    scale_x: u16,
+    scale_y: u16,
 }
 
 impl<const MAX_SIZE: usize, T: PixelColor, RNG: rand_core::RngCore> SnakeGame<MAX_SIZE, T, RNG> {
     pub fn new(
-        size_x: u8,
-        size_y: u8,
-        scale_x: u8,
-        scale_y: u8,
+        size_x: u16,
+        size_y: u16,
+        scale_x: u16,
+        scale_y: u16,
         rand_source: RNG,
+        background_color: T,
         snake_color: T,
         food_color: T,
         food_lifetime: u8,
@@ -190,6 +191,7 @@ impl<const MAX_SIZE: usize, T: PixelColor, RNG: rand_core::RngCore> SnakeGame<MA
             Food::<T, RNG>::new(food_color, rand_source, size_x / scale_x, size_y / scale_y);
         food.replace(&snake);
         SnakeGame {
+            background_color,
             snake,
             food,
             food_age: 0,
@@ -218,6 +220,24 @@ impl<const MAX_SIZE: usize, T: PixelColor, RNG: rand_core::RngCore> SnakeGame<MA
     pub fn snake_grown(&self, sl: usize) -> bool {
         self.snake.len > sl
     }
+    pub fn pre_draw<D>(&mut self, target: &mut D) -> ()
+    where
+        D: DrawTarget<Color = T>,
+    {
+        let mut scaled_display = ScaledDisplay::<D> {
+            real_display: target,
+            size_x: self.size_x / self.scale_x,
+            size_y: self.size_y / self.scale_y,
+            scale_x: self.scale_x,
+            scale_y: self.scale_y,
+        };
+
+        for part in self.snake.parts {
+            let mut part = part.clone();
+            part.1 = self.background_color;
+            _ = part.draw(&mut scaled_display);
+        }
+    }
     pub fn draw<D>(&mut self, target: &mut D) -> ()
     where
         D: DrawTarget<Color = T>,
@@ -245,17 +265,16 @@ impl<const MAX_SIZE: usize, T: PixelColor, RNG: rand_core::RngCore> SnakeGame<MA
             _ = part.draw(&mut scaled_display);
         }
         _ = self.food.get_pixel().draw(&mut scaled_display);
-
     }
 }
 
 /// A dummy DrawTarget implementation that can magnify each pixel so the user code does not need to adapt for scaling things
 struct ScaledDisplay<'a, T: DrawTarget> {
     real_display: &'a mut T,
-    size_x: u8,
-    size_y: u8,
-    scale_x: u8,
-    scale_y: u8,
+    size_x: u16,
+    size_y: u16,
+    scale_x: u16,
+    scale_y: u16,
 }
 
 impl<'a, T: DrawTarget> DrawTarget for ScaledDisplay<'a, T> {

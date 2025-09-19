@@ -24,6 +24,7 @@ fn main() -> Result<(), std::convert::Infallible> {
         3,
         3,
         rand::thread_rng(),
+        BinaryColor::Off,
         BinaryColor::On,
         BinaryColor::On,
         50,
@@ -46,7 +47,7 @@ fn main() -> Result<(), std::convert::Infallible> {
                 _ => {}
             }
         }
-        display.clear(BinaryColor::Off)?;
+        game.pre_draw(&mut display);
         game.draw(&mut display);
         window.update(&display);
         thread::sleep(Duration::from_millis(50));
